@@ -1,61 +1,67 @@
-{pkgs, lib, config, ...}:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 let
-	game = lib.types.submodule{
-		options = {
-			name = lib.mkOption {
-				description = "Name of the game installed";
-				type = lib.types.str;
-			};
-			path = lib.mkOption {
-				description = "Path to the executable within the prefix's C:/ drive";
-				type = lib.types.str;
-				default = "Program Files (x86)/Battle.net/Battle.net Launcher.exe"; 
-			};
-			proton = lib.mkOption {
-				description = "The proton package used for the game";
-				type = lib.types.package;
-				default = pkgs.proton-ge-bin;
-			};
-			launchArgs = lib.mkOption {
-				description = "Any launch options to be sent to the exe";
-				type = lib.types.str;
-				default = "";
-			};
+  game = lib.types.submodule {
+    options = {
+      name = lib.mkOption {
+        description = "Name of the game installed";
+        type = lib.types.str;
+      };
+      path = lib.mkOption {
+        description = "Path to the executable within the prefix's C:/ drive";
+        type = lib.types.str;
+        default = "Program Files (x86)/Battle.net/Battle.net Launcher.exe";
+      };
+      proton = lib.mkOption {
+        description = "The proton package used for the game";
+        type = lib.types.package;
+        default = pkgs.proton-ge-bin;
+      };
+      launchArgs = lib.mkOption {
+        description = "Any launch options to be sent to the exe";
+        type = lib.types.str;
+        default = "";
+      };
 
-		};
-	};
-	cfg = config.programs.battlenet-umu;
+    };
+  };
+  cfg = config.programs.battlenet-umu;
 in
 {
-	options.programs.battlenet-umu = {
-		enable = lib.mkEnableOption "umu-launcher for battle.net games";
-		prefix = lib.mkOption {
-			description = "Wine Prefix for the umu-launcher for your battle.net games";
-			type = lib.types.path;
-			default = "${config.xdg.dataHome}/battlenet-umu/prefix";
-		};
-		updateRuntime = lib.mkOption {
-			description = "Whether umu-launcher should check for a new runtime with each launch, null means check only when nothing is installed";
-			type = lib.types.nullOr lib.types.bool;
-			default = null;
-		};
-		games = lib.mkOption {
-			description = "A list of battle.net game definitions";
-			type = lib.types.listOf game;
-			default = [ { name = "Battle.net"; } ];
-		};
+  options.programs.battlenet-umu = {
+    enable = lib.mkEnableOption "umu-launcher for battle.net games";
+    prefix = lib.mkOption {
+      description = "Wine Prefix for the umu-launcher for your battle.net games";
+      type = lib.types.path;
+      default = "${config.xdg.dataHome}/battlenet-umu/prefix";
+    };
+    updateRuntime = lib.mkOption {
+      description = "Whether umu-launcher should check for a new runtime with each launch, null means check only when nothing is installed";
+      type = lib.types.nullOr lib.types.bool;
+      default = null;
+    };
+    games = lib.mkOption {
+      description = "A list of battle.net game definitions";
+      type = lib.types.listOf game;
+      default = [ { name = "Battle.net"; } ];
+    };
 
-	};
-	config = lib.mkIf cfg.enable {
-		home.packages = map (game:
-			pkgs.callPackage ./pkg.nix {
-				bnetPrefix = cfg.prefix;
-				gamePath = game.path;
-				gameName = game.name;
-				launchArgs = game.launchArgs;
-				updateRuntime = cfg.updateRuntime;
-				proton-ge-bin = game.proton;
-			}
-		) cfg.games;
-	};
+  };
+  config = lib.mkIf cfg.enable {
+    home.packages = map (
+      game:
+      pkgs.callPackage ./pkg.nix {
+        bnetPrefix = cfg.prefix;
+        gamePath = game.path;
+        gameName = game.name;
+        launchArgs = game.launchArgs;
+        updateRuntime = cfg.updateRuntime;
+        proton-ge-bin = game.proton;
+      }
+    ) cfg.games;
+  };
 }
